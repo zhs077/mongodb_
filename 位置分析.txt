@@ -1,0 +1,34 @@
+function distance(x,y) {
+
+	if(x > 120.677666 || x < 115.844333 || y >28.3666666 || y <23.5){
+			return 'X=' +x +',Y='+y ;
+	}
+	// write your code
+	//db.runCommand({ geoNear : "xqpoint", near : [118.079808, 24.492377], spherical
+	var native_Info="";
+	var poi_info="";
+	var road_info="";
+
+	/*6378137 米 6371 千米*/
+  var Poi= db.runCommand({ geoNear : "poi", near : [x, y], spherical
+ : true,  maxDistance : 500/6378137, distanceMultiplier: 6378137,num:1});
+ if(Poi.results.length){
+ 	poi_info ='距离' + Poi.results[0].obj.Name + parseInt(Poi.results[0].dis) +'米';
+ 	
+ }
+ 
+   var road = db.RoadSegment.find({ "geom.coordinates" : { "$near" : [x, y] } },{"NAME_CHN":1}).limit(1).toArray();
+   if (road[0].NAME_CHN){
+   		road_info =  road[0].NAME_CHN
+   }else{
+   		road_info = '小路'
+   }
+   var native = db.native.find({ "geom" : { "$geoIntersects" : { "$geometry" : { "type" : "Point", "coordinates" : [x, y] } } } }, { "XNAME" : 1, "SNAME" : 1 }).limit(1).toArray();
+   if (native.length){
+   		native_info = native[0].SNAME + native[0].XNAME
+   }else{
+   	native_info='海域'
+   }
+
+ return native_info+road_info + poi_info ;
+}
